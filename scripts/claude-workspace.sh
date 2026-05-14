@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# ────────────────────────────────────────────────────────────────
+# claude-workspace.sh
+#
+# Builds (if needed) and runs the Claude Code dev container,
+# mounting the current directory as /workspace inside the container.
+#
+# Usage:
+#   ./claude-workspace.sh
+# ────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ── 1. load .env ─────────────────────────────────────────────────
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    source "$SCRIPT_DIR/.env"
+    set +a
+fi
+
+# ── 1b. config ───────────────────────────────────────────────────
+IMAGE_NAME="${IMAGE_NAME:-claude-code-dev}"
+PORT="${PORT:-11434}"
+
+# ── 2. ensure colima is running ──────────────────────────────────
+if ! colima status &>/dev/null; then
+    echo "→ Starting colima…"
+    colima start --memory 6
+else
+    echo "→ colima already running"
+fi
+
+# ── 3. ensure llama-server is running on that port ───────────────
+PATH_TO_MODEL="${PATH_TO_MODEL:?PATH_TO_MODEL is not set in .env}"
+LLAMA_SERVER="${LLAMA_SERVER:?LLAMA_SERVER is not set in .env}"
+
+if lsof -iTCP:"$PORT" -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "→ llama-server already running on port $PORT"
+else
+    echo "→ Starting llama-server on port $PORT…"
+    nohup "$LLAMA_SERVER" \
+        -m "$PATH_TO_MODEL" \
+        --port "$PORT" \
+        -ngl 99 \
+        > /tmp/llama-server.log 2>&1 &
+    sleep 2
+    echo "→ llama-server started"
+fi
+
+# ── 4. build image if missing or if Dockerfile changed ──────────
+DOCKERFILE="${SCRIPT_DIR}/Dockerfile"
+if ! docker image inspect "$IMAGE_NAME" &>/dev/null; then
+    echo "→ Building Docker image '${IMAGE_NAME}'…"
+    docker build -t "$IMAGE_NAME" "$SCRIPT_DIR"
+else
+    echo "→ Image '${IMAGE_NAME}' already exists. Skipping build."
+    echo "  (Run 'docker rmi ${IMAGE_NAME}' first to force a rebuild.)"
+fi
+
+# ── 5. ensure ~/.claude-sandbox exists ────────────────────────────
+CLAUDE_SANDBOX="$HOME/.claude-sandbox"
+if [ ! -d "$CLAUDE_SANDBOX" ]; then
+    echo "→ Creating $CLAUDE_SANDBOX"
+    mkdir -p "$CLAUDE_SANDBOX"
+fi
+
+# ── 6. run container ─────────────────────────────────────────────
+echo "→ Launching Claude Code in $(pwd)"
+echo "  ANTHROPIC_BASE_URL will point to http://localhost:${PORT}"
+echo ""
+
+docker run --rm -it \
+    --network=host \
+    -e PORT="${PORT}" \
+    -e ANTHROPIC_BASE_URL="http://localhost:${PORT}" \
+    -e ANTHROPIC_AUTH_TOKEN="none" \
+    -e CLAUDE_CODE_ATTRIBUTION_HEADER=0 \
+    -e COLORTERM=truecolor \
+    -v "$(pwd):/workspace" \
+    -v "$CLAUDE_SANDBOX:/home/claude/.claude:rw" \
+    -w /workspace \
+    "$IMAGE_NAME"
