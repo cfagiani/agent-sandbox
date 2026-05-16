@@ -14,4 +14,13 @@ fi
 
 IMAGE_NAME="${IMAGE_NAME:-claude-code-dev}"
 
-docker build -t "$IMAGE_NAME" "$PROJECT_DIR/docker"
+# Parse flags
+BUILD_ARGS=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --no-cache) BUILD_ARGS+=(--no-cache); shift ;;
+        *) echo "Unknown option: $1" >&2; exit 1 ;;
+    esac
+done
+
+docker build "${BUILD_ARGS[@]}" -t "$IMAGE_NAME" "$PROJECT_DIR/docker"
