@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 # ────────────────────────────────────────────────────────────────
 # Claude Code dev container
-#   • Java 26 (Eclipse Temurin)
+#   • Java 21 (Eclipse Temurin)
 #   • Maven (latest)
 #   • Python 3 + uv
 #   • Node.js LTS
 #   • Claude Code (npm)
 # ────────────────────────────────────────────────────────────────
-FROM eclipse-temurin:26-jdk-noble
+FROM eclipse-temurin:21-jdk-noble
 
 # ---------- system deps ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
