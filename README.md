@@ -51,3 +51,11 @@ cp scripts/.env.example scripts/.env
 ```
 
 By default, the scripts expect colima and llama-server to be running. If they are not, `claude-workspace.sh` will start them automatically.
+
+
+## Future Enhancements
+Some potential future enhancements:
+* Profile support - make the docker file a template and install a different set of tools based on the type of dev work it should support
+* MCP/SKill integration - pre-seed the docker file with specific skills and MCPs
+* Template for base set of claude configuration that is seeded into the workspace config home on first start
+* Support for skipping local llm configuration and using cloud models

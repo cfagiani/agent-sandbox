@@ -59,12 +59,23 @@ else
     echo "  (Run 'docker rmi ${IMAGE_NAME}' first to force a rebuild.)"
 fi
 
-# ── 5. ensure ~/.claude-sandbox exists ────────────────────────────
+# ── 5. ensure ~/.claude-sandbox/workspaces exists ──────────────────
 CLAUDE_SANDBOX="$HOME/.claude-sandbox"
-if [ ! -d "$CLAUDE_SANDBOX" ]; then
-    echo "→ Creating $CLAUDE_SANDBOX"
-    mkdir -p "$CLAUDE_SANDBOX"
+CLAUDE_WORKSPACES="$CLAUDE_SANDBOX/workspaces"
+if [ ! -d "$CLAUDE_WORKSPACES" ]; then
+    echo "→ Creating $CLAUDE_WORKSPACES"
+    mkdir -p "$CLAUDE_WORKSPACES"
 fi
+
+# ── 5b. compute workspace-specific sandbox dir from pwd hash ──────
+WORKSPACE_HASH=$(echo "$(pwd)" | sha256sum | awk '{print $1}' | cut -c1-16)
+WORKSPACE_SANDBOX="$CLAUDE_WORKSPACES/$WORKSPACE_HASH"
+if [ ! -d "$WORKSPACE_SANDBOX" ]; then
+    echo "→ Creating workspace sandbox: $WORKSPACE_SANDBOX"
+    mkdir -p "$WORKSPACE_SANDBOX"
+fi
+
+echo "→ Workspace hash: $WORKSPACE_HASH ($(pwd))"
 
 # ── 6. run container ─────────────────────────────────────────────
 echo "→ Launching Claude Code in $(pwd)"
@@ -79,6 +90,6 @@ docker run --rm -it \
     -e CLAUDE_CODE_ATTRIBUTION_HEADER=0 \
     -e COLORTERM=truecolor \
     -v "$(pwd):/workspace" \
-    -v "$CLAUDE_SANDBOX:/home/claude/.claude:rw" \
+    -v "$WORKSPACE_SANDBOX:/home/claude/.claude:rw" \
     -w /workspace \
     "$IMAGE_NAME"
