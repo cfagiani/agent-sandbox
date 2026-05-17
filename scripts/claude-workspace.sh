@@ -26,7 +26,7 @@ PORT="${PORT:-11434}"
 
 # ── 2. ensure colima is running ──────────────────────────────────
 if ! colima status &>/dev/null; then
-    echo "→ Starting colima…"
+    echo "→ Starting colima..."
     colima start --memory 6
 else
     echo "→ colima already running"
@@ -39,7 +39,7 @@ LLAMA_SERVER="${LLAMA_SERVER:?LLAMA_SERVER is not set in .env}"
 if lsof -iTCP:"$PORT" -sTCP:LISTEN -t >/dev/null 2>&1; then
     echo "→ llama-server already running on port $PORT"
 else
-    echo "→ Starting llama-server on port $PORT…"
+    echo "→ Starting llama-server on port $PORT..."
     nohup "$LLAMA_SERVER" \
         -m "$PATH_TO_MODEL" \
         --port "$PORT" \
@@ -53,7 +53,7 @@ fi
 # ── 4. build image if missing or if Dockerfile changed ──────────
 DOCKERFILE="${SCRIPT_DIR}/Dockerfile"
 if ! docker image inspect "$IMAGE_NAME" &>/dev/null; then
-    echo "→ Building Docker image '${IMAGE_NAME}'…"
+    echo "→ Building Docker image '${IMAGE_NAME}'..."
     docker build -t "$IMAGE_NAME" "$SCRIPT_DIR"
 else
     echo "→ Image '${IMAGE_NAME}' already exists. Skipping build."
