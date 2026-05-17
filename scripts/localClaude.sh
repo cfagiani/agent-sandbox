@@ -32,7 +32,8 @@ else
     nohup "$LLAMA_SERVER" \
         -m "$PATH_TO_MODEL" \
         --port "$PORT" \
-        -ngl 99 \
+        -c "$CONTEXT_SIZE" \
+        "${LLM_OPTIONS[@]}" \
         > /tmp/llama-server.log 2>&1 &
 
     # Optional: wait briefly for startup
