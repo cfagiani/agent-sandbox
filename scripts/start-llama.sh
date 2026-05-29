@@ -2,12 +2,21 @@
 # ────────────────────────────────────────────────────────────────
 # start-llama.sh
 #
-# Shared logic: ensure llama-server is running on the configured port.
-# Both localClaude.sh and claude-workspace.sh source this script
-# after loading .env so that PORT, MODEL_DIR, LLAMA_SERVER,
-# MODEL_ALIAS, and CONTEXT_SIZE are already set.
-# MODEL_FILE and LLM_OPTIONS are selected inside this script based on MODEL_ALIAS.
+# Ensures llama-server is running on the configured port.
+# Can be sourced by localClaude.sh / claude-workspace.sh (which
+# load .env before sourcing) or run directly (loads .env itself).
 # ────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ── load .env ────────────────────────────────────────────────────
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    source "$SCRIPT_DIR/.env"
+    set +a
+fi
 
 # ── model-specific file name and LLM options ──────────────────────
 # Falls back to generic values when MODEL_ALIAS is unrecognized.
