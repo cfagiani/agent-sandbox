@@ -22,27 +22,11 @@ LLAMA_SERVER="${LLAMA_SERVER:?LLAMA_SERVER is not set in .env}"
 MODEL_ALIAS="${MODEL_ALIAS:-local}"
 
 ########################################
-# Check if llama-server is already running
+# Ensure llama-server is running
 ########################################
 
-if lsof -iTCP:"$PORT" -sTCP:LISTEN -t >/dev/null 2>&1; then
-    echo "llama-server already running on port $PORT"
-else
-    echo "Starting llama-server on port $PORT..."
-
-    nohup "$LLAMA_SERVER" \
-        -m "$PATH_TO_MODEL" \
-        --alias "$MODEL_ALIAS" \
-        --port "$PORT" \
-        -c "$CONTEXT_SIZE" \
-        "${LLM_OPTIONS[@]}" \
-        > /tmp/llama-server.log 2>&1 &
-
-    # Optional: wait briefly for startup
-    sleep 2
-
-    echo "llama-server started"
-fi
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/start-llama.sh"
 
 ########################################
 # Claude environment variables
