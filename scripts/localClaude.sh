@@ -19,6 +19,7 @@ PORT="${PORT:-11434}"
 
 PATH_TO_MODEL="${PATH_TO_MODEL:?PATH_TO_MODEL is not set in .env}"
 LLAMA_SERVER="${LLAMA_SERVER:?LLAMA_SERVER is not set in .env}"
+MODEL_ALIAS="${MODEL_ALIAS:-local}"
 
 ########################################
 # Check if llama-server is already running
@@ -31,6 +32,7 @@ else
 
     nohup "$LLAMA_SERVER" \
         -m "$PATH_TO_MODEL" \
+        --alias "$MODEL_ALIAS" \
         --port "$PORT" \
         -c "$CONTEXT_SIZE" \
         "${LLM_OPTIONS[@]}" \
