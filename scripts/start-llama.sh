@@ -63,10 +63,8 @@ esac
 
 PATH_TO_MODEL="${MODEL_DIR}/${MODEL_FILE}"
 
-if lsof -iTCP:"$PORT" -sTCP:LISTEN -t >/dev/null 2>&1; then
-    echo "→ llama-server already running on port $PORT"
-else
-    echo "→ Starting llama-server on port $PORT..."
+start_server() {
+    echo "→ Starting llama-server on port $PORT with $MODEL_FILE..."
     nohup "$LLAMA_SERVER" \
         -m "$PATH_TO_MODEL" \
         --alias "$MODEL_ALIAS" \
@@ -76,4 +74,21 @@ else
         > /tmp/llama-server.log 2>&1 &
     sleep 2
     echo "→ llama-server started"
+}
+
+if lsof -iTCP:"$PORT" -sTCP:LISTEN -t >/dev/null 2>&1; then
+    # Something is on the port — check whether it's serving the model we want.
+    CURRENT_ALIAS="$(curl -sf "http://localhost:$PORT/v1/models" 2>/dev/null \
+        | jq -r '.data[0].id // .data[0] // empty' 2>/dev/null || true)"
+
+    if [ "$CURRENT_ALIAS" = "$MODEL_ALIAS" ]; then
+        echo "→ llama-server already running on port $PORT with $MODEL_FILE"
+    else
+        echo "→ Wrong model on port $PORT (expected $MODEL_ALIAS, found ${CURRENT_ALIAS:-unknown}) — killing"
+        lsof -iTCP:"$PORT" -sTCP:LISTEN -t | xargs kill >/dev/null 2>&1 || true
+        sleep 1
+        start_server
+    fi
+else
+    start_server
 fi
