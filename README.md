@@ -9,7 +9,7 @@ Run [Claude Code](https://claude.ai/code) in an isolated Docker container that t
 | `docker/Dockerfile` | Builds the `claude-code-dev` image: Java 26, Maven, Python 3 + uv, Node.js LTS, and Claude Code (npm). |
 | `docker/entrypoint.sh` | Container entrypoint that resolves the host IP and launches `claude`. |
 | `scripts/claude-workspace.sh` | Main entry point: reads `scripts/.env`, starts colima (if needed), starts llama-server (if needed), builds the Docker image (if missing), and runs the container with the current directory mounted as `/workspace` and a workspace-specific config directory mounted at `/home/claude/.claude`. |
-| `scripts/.env.example` | Template for local configuration — copy to `.env` and set `PATH_TO_MODEL`, `LLAMA_SERVER`, `PORT`, and `IMAGE_NAME`. |
+| `scripts/.env.example` | Template for local configuration — copy to `.env` and set `MODEL_DIR`, `LLAMA_SERVER`, `PORT`, and `IMAGE_NAME`. |
 | `scripts/localClaude.sh` | Lightweight alternative that skips Docker entirely — just starts llama-server and runs `claude` directly on the host. |
 | `scripts/build-image.sh` | Standalone script to build the `claude-code-dev` Docker image. |
 
@@ -32,7 +32,7 @@ cp scripts/.env.example scripts/.env
 # Edit scripts/.env with your model and llama-server paths
 ```
 
-- `PATH_TO_MODEL` — absolute path to your GGUF model file
+- `MODEL_DIR` — directory containing your GGUF model files (filename is derived from `MODEL_ALIAS`)
 - `LLAMA_SERVER` — absolute path to your llama-server binary
 - `PORT` — port for the llama.cpp server (default: `11434`)
 - `IMAGE_NAME` — name for the Docker image (default: `claude-code-dev`)

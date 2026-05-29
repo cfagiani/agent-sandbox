@@ -33,7 +33,7 @@ else
 fi
 
 # ── 3. ensure llama-server is running on that port ───────────────
-PATH_TO_MODEL="${PATH_TO_MODEL:?PATH_TO_MODEL is not set in .env}"
+MODEL_DIR="${MODEL_DIR:?MODEL_DIR is not set in .env}"
 LLAMA_SERVER="${LLAMA_SERVER:?LLAMA_SERVER is not set in .env}"
 MODEL_ALIAS="${MODEL_ALIAS:-local}"
 
