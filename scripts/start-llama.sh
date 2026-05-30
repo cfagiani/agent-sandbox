@@ -5,6 +5,9 @@
 # Ensures llama-server is running on the configured port.
 # Can be sourced by localClaude.sh / claude-workspace.sh (which
 # load .env before sourcing) or run directly (loads .env itself).
+#
+# Usage:
+#   ./start-llama.sh [MODEL_ALIAS]
 # ────────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -19,6 +22,19 @@ if [ -f "$SCRIPT_DIR/.env" ]; then
 fi
 
 # ── model-specific file name and LLM options ──────────────────────
+# When run directly, accepts an optional positional argument to override
+# MODEL_ALIAS from .env (e.g. ./start-llama.sh qwen3.6-27B).
+# When sourced, callers should set MODEL_ALIAS before sourcing to override.
+if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+    # Sourced — $1 belongs to the caller; don't touch it.
+    : "${MODEL_ALIAS:=local}"
+elif [ $# -ge 1 ]; then
+    # Run directly with a positional argument — override .env value.
+    MODEL_ALIAS="$1"
+else
+    : "${MODEL_ALIAS:=local}"
+fi
+
 # Falls back to generic values when MODEL_ALIAS is unrecognized.
 case "$MODEL_ALIAS" in
   qwen3.6-27B)
@@ -36,18 +52,20 @@ case "$MODEL_ALIAS" in
                 )
     ;;
   qwen3.6-35B-A3B)
-      MODEL_FILE="Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf"
+      MODEL_FILE="Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf"
       LLM_OPTIONS=(
                     -fa on
                     -np 1
                     -ngl 99
-                    --temp 0.7
+                    --temp 1.0
                     --top-p 0.95
+                    --min-p 0.00
                     --top-k 20
-                    --presence-penalty 1.0
+                    --presence-penalty 1.5
+                    --spec-type draft-mtp
+                    --spec-draft-n-max 2
                   )
       ;;
-
   *)
     MODEL_FILE="${MODEL_ALIAS}.gguf"
     LLM_OPTIONS=(
