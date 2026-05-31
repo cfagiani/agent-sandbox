@@ -68,6 +68,13 @@ if [ ! -d "$WORKSPACE_SANDBOX" ]; then
     mkdir -p "$WORKSPACE_SANDBOX"
 fi
 
+# ── 5c. seed default settings if absent ──────────────────────────
+INITIAL_SETTINGS="${SCRIPT_DIR}/../claude/initial_settings.json"
+if [ -f "$INITIAL_SETTINGS" ] && [ ! -f "$WORKSPACE_SANDBOX/settings.json" ]; then
+    echo "→ Copying initial settings to sandbox"
+    cp "$INITIAL_SETTINGS" "$WORKSPACE_SANDBOX/settings.json"
+fi
+
 echo "→ Workspace hash: $WORKSPACE_HASH ($(pwd))"
 
 # ── 6. run container ─────────────────────────────────────────────

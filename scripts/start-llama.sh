@@ -42,11 +42,10 @@ case "$MODEL_ALIAS" in
     LLM_OPTIONS=(
                   -fa on
                   -np 1
-                  --temp 0.7
+                  --temp 0.6
                   --top-p 0.95
                   --top-k 20
-                  --presence-penalty 1.0
-                  --min-p 0.01
+                  --min-p 0.00
                   --spec-type draft-mtp
                   --spec-draft-n-max 2
                 )
