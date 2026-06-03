@@ -55,6 +55,7 @@ WORKDIR /workspace
 # host.docker.internal resolves correctly at runtime.
 ENV ANTHROPIC_AUTH_TOKEN="none"
 ENV CLAUDE_CODE_ATTRIBUTION_HEADER=0
+ENV DISABLE_CRASH_REPORTER=1
 ENV COLORTERM=truecolor
 
 # ---------- entrypoint ----------
