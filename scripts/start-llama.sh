@@ -42,6 +42,7 @@ case "$MODEL_ALIAS" in
     LLM_OPTIONS=(
                   -fa on
                   -np 1
+                  -ngl 99
                   --temp 0.6
                   --top-p 0.95
                   --top-k 20
@@ -69,6 +70,7 @@ case "$MODEL_ALIAS" in
     MODEL_FILE="${MODEL_ALIAS}.gguf"
     LLM_OPTIONS=(
                   -fa on
+                  -ngl 99
                   -np 1
                   --temp 0.7
                   --top-p 0.95
