@@ -37,6 +37,23 @@ fi
 
 # Falls back to generic values when MODEL_ALIAS is unrecognized.
 case "$MODEL_ALIAS" in
+  qwen3.8-27B)
+    MODEL_FILE="Qwen3.8-27B-UD-Q4_K_XL.gguf"
+    LLM_OPTIONS=(
+                  -fa on
+                  -np 1
+                  -ngl 99
+                  --temp 1.0
+                  --top-p 0.95
+                  --top-k 20
+                  --min-p 0.00
+                  --presence-penalty 0.0
+                  --repeat-penalty 1.0
+                  --spec-type draft-mtp
+                  --spec-draft-n-max 2
+                  --chat-template $SCRIPT_DIR/qwenChatTemplate.jinja
+                )
+    ;;
   qwen3.6-27B)
     MODEL_FILE="Qwen3.6-27B-UD-Q4_K_XL.gguf"
     LLM_OPTIONS=(
