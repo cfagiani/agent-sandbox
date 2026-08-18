@@ -43,7 +43,7 @@ case "$MODEL_ALIAS" in
                   -fa on
                   -np 1
                   -ngl 99
-                  --temp 1.0
+                  --temp 0.6
                   --top-p 0.95
                   --top-k 20
                   --min-p 0.00
@@ -51,7 +51,8 @@ case "$MODEL_ALIAS" in
                   --repeat-penalty 1.0
                   --spec-type draft-mtp
                   --spec-draft-n-max 2
-                  --chat-template $SCRIPT_DIR/qwenChatTemplate.jinja
+                  --chat-template-file $SCRIPT_DIR/qwenChatTemplate.jinja
+                  --jinja
                 )
     ;;
   qwen3.6-27B)
@@ -105,6 +106,7 @@ start_server() {
         -m "$PATH_TO_MODEL" \
         --alias "$MODEL_ALIAS" \
         --port "$PORT" \
+        --fit off \
         -c "$CONTEXT_SIZE" \
         "${LLM_OPTIONS[@]}" \
         > /tmp/llama-server.log 2>&1 &
