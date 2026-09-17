@@ -1,15 +1,17 @@
 # syntax=docker/dockerfile:1
 # ────────────────────────────────────────────────────────────────
-# Claude Code dev container
-#   • Java 21 (Eclipse Temurin)
-#   • Maven (latest)
-#   • Python 3 + uv
-#   • Node.js LTS
-#   • Claude Code (npm)
+# Agent dev container (pluggable: claude | opencode)
+#   Common base: Java 21 (Eclipse Temurin), Maven, Python 3 + uv, Node.js LTS
+#   Agent (selected via --build-arg AGENT=claude|opencode):
+#     • claude   -> @anthropic-ai/claude-code
+#     • opencode -> opencode-ai
 # ────────────────────────────────────────────────────────────────
+ARG AGENT=claude
 FROM eclipse-temurin:21-jdk-noble
 
-# ---------- system deps ----------
+ARG AGENT
+
+# ---------- system deps (common) ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
         ca-certificates \
@@ -39,26 +41,29 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# ---------- Claude Code ----------
-RUN npm install -g @anthropic-ai/claude-code
+# ---------- agent (selected by build arg) ----------
+RUN case "${AGENT}" in \
+        claude)   npm install -g @anthropic-ai/claude-code ;; \
+        opencode) npm install -g opencode-ai ;; \
+        *) echo "Unknown AGENT: ${AGENT} (expected claude or opencode)" >&2 && exit 1 ;; \
+    esac
 
 # ---------- non-root user ----------
-RUN useradd -m -s /bin/bash claude
-RUN mkdir -p /workspace /home/claude/.claude && chmod 777 /workspace
+RUN useradd -m -s /bin/bash develop
+RUN mkdir -p /workspace /home/develop/.claude /home/develop/.config/opencode && chmod 777 /workspace
 
-USER claude
+USER develop
 WORKDIR /workspace
 
 # ---------- runtime env ----------
 # PORT must be set by the caller (host proxy port).
-# ANTHROPIC_BASE_URL is built dynamically in the entrypoint so that
-# host.docker.internal resolves correctly at runtime.
-ENV ANTHROPIC_AUTH_TOKEN="none"
-ENV CLAUDE_CODE_ATTRIBUTION_HEADER=0
-ENV DISABLE_CRASH_REPORTER=1
+# ANTHROPIC_BASE_URL / the OpenCode config are resolved dynamically in the
+# entrypoint so that host.docker.internal resolves correctly at runtime.
+ENV AGENT="${AGENT}"
 ENV COLORTERM=truecolor
+ENV DISABLE_CRASH_REPORTER=1
 
 # ---------- entrypoint ----------
-COPY --chown=claude:claude entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --chown=develop:develop entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

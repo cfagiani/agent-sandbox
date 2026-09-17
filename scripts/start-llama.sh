@@ -3,7 +3,7 @@
 # start-llama.sh
 #
 # Ensures llama-server is running on the configured port.
-# Can be sourced by localClaude.sh / claude-workspace.sh (which
+# Can be sourced by localAgent.sh / agent-workspace.sh (which
 # load .env before sourcing) or run directly (loads .env itself).
 #
 # Usage:
