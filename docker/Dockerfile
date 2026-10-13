@@ -24,7 +24,7 @@ RUN case "${AGENT}" in \
     esac
 
 # ---------- non-root user ----------
-RUN useradd -m -s /bin/bash develop
+RUN adduser -D -s /bin/bash develop
 RUN mkdir -p /workspace /home/develop/.claude /home/develop/.config/opencode /home/develop/.local/share/opencode \
     && chown -R develop:develop /home/develop/.local \
     && chmod 777 /workspace

@@ -7,10 +7,10 @@
 # image never re-runs these (slow) layers. build-image.sh rebuilds it
 # on every run, but it is a cached no-op unless this file changes.
 # ────────────────────────────────────────────────────────────────
-FROM eclipse-temurin:21-jdk-noble
+FROM eclipse-temurin:21-jdk-alpine
 
 # ---------- system deps (common) ----------
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apk add --no-cache \
         curl \
         ca-certificates \
         git \
@@ -18,9 +18,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         unzip \
         gnupg \
         python3 \
-        python3-pip \
-        python3-venv \
-    && rm -rf /var/lib/apt/lists/*
+        py3-pip \
+        py3-setuptools \
+        nodejs \
+        npm
 
 # ---------- uv (fast Python package manager) ----------
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -33,8 +34,3 @@ RUN curl -fsSL "https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/b
     && ln -s /opt/apache-maven-${MAVEN_VERSION} /opt/maven
 ENV MAVEN_HOME=/opt/maven
 ENV PATH="${MAVEN_HOME}/bin:${PATH}"
-
-# ---------- Node.js LTS ----------
-RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    && rm -rf /var/lib/apt/lists/*
