@@ -78,6 +78,7 @@ fi
 case "$AGENT" in
     claude)
         CONFIG_MOUNT="/home/develop/.claude"
+        DATA_MOUNT=""
         INITIAL_SETTINGS="${PROJECT_DIR}/claude/initial_settings.json"
         if [ -f "$INITIAL_SETTINGS" ] && [ ! -f "$WORKSPACE_SANDBOX/settings.json" ]; then
             echo "→ Copying initial settings to sandbox"
@@ -88,6 +89,14 @@ case "$AGENT" in
         # opencode.json is generated at runtime by the entrypoint (it needs
         # the host IP resolved inside the container).
         CONFIG_MOUNT="/home/develop/.config/opencode"
+        # opencode's data dir (sessions, logs) lives in ~/.local/share/opencode
+        # inside the container; bind it into the per-workspace sandbox so it
+        # persists on the host.
+        DATA_MOUNT="/home/develop/.local/share/opencode"
+        if [ ! -d "$WORKSPACE_SANDBOX/opencode" ]; then
+            echo "→ Creating opencode data dir: $WORKSPACE_SANDBOX/opencode"
+            mkdir -p "$WORKSPACE_SANDBOX/opencode"
+        fi
         ;;
 esac
 
@@ -98,6 +107,11 @@ echo "→ Launching ${AGENT} in $(pwd)"
 echo "  The agent will talk to the local LLM proxy on port ${PORT}"
 echo ""
 
+EXTRA_MOUNTS=()
+if [ -n "$DATA_MOUNT" ]; then
+    EXTRA_MOUNTS+=(-v "$WORKSPACE_SANDBOX/opencode:${DATA_MOUNT}:rw")
+fi
+
 docker run --rm -it \
     --network=host \
     -e AGENT="${AGENT}" \
@@ -105,5 +119,6 @@ docker run --rm -it \
     -e MODEL_ALIAS="${MODEL_ALIAS}" \
     -v "$(pwd):/workspace" \
     -v "$WORKSPACE_SANDBOX:${CONFIG_MOUNT}:rw" \
+    ${EXTRA_MOUNTS[@]+"${EXTRA_MOUNTS[@]}"} \
     -w /workspace \
     "$IMAGE"

@@ -50,7 +50,9 @@ RUN case "${AGENT}" in \
 
 # ---------- non-root user ----------
 RUN useradd -m -s /bin/bash develop
-RUN mkdir -p /workspace /home/develop/.claude /home/develop/.config/opencode && chmod 777 /workspace
+RUN mkdir -p /workspace /home/develop/.claude /home/develop/.config/opencode /home/develop/.local/share/opencode \
+    && chown -R develop:develop /home/develop/.local \
+    && chmod 777 /workspace
 
 USER develop
 WORKDIR /workspace
