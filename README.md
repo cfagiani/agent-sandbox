@@ -13,9 +13,9 @@ The agent is **pluggable**: a common base image is built once, then a thin agent
 | `docker/entrypoint.sh` | Container entrypoint: resolves the host IP, then launches the selected agent (`claude` or `opencode`) pointed at the local LLM proxy. For OpenCode it generates `opencode.json` at runtime. |
 | `scripts/agent-workspace.sh` | Main entry point: reads `scripts/.env`, starts colima (if needed), starts llama-server (if needed), builds the Docker image (if missing), and runs the container with the current directory mounted as `/workspace` and a workspace-specific config directory mounted into the container. |
 | `scripts/localAgent.sh` | Lightweight alternative that skips Docker entirely — just starts llama-server and runs the selected agent directly on the host. |
-| `scripts/build-image.sh` | Builds the base image (cached), then the agent image(s) on top. Builds **both** agents by default; use `--agent <name>` to build just one. `--no-cache` bypasses the cache for the agent image only (e.g. to pick up a new agent version) — the base always uses its cache. |
+| `scripts/build-image.sh` | Builds the base image (cached), then the agent image(s) on top. Builds the agents named in `BUILD_AGENTS` (`scripts/.env`; both by default); use `--agent <name>` to build just one. `--no-cache` bypasses the cache for the agent image only (e.g. to pick up a new agent version) — the base always uses its cache. |
 | `scripts/start-llama.sh` | Starts (or reuses) a local llama.cpp server with model-specific options. |
-| `scripts/.env.example` | Template for local configuration — copy to `.env` and set `AGENT`, `MODEL_DIR`, `LLAMA_SERVER`, `PORT`, `IMAGE_NAME`, and `MODEL_ALIAS`. |
+| `scripts/.env.example` | Template for local configuration — copy to `.env` and set `AGENT`, `MODEL_DIR`, `LLAMA_SERVER`, `PORT`, `IMAGE_NAME`, `BUILD_AGENTS`, and `MODEL_ALIAS`. |
 | `claude/initial_settings.json` | Default Claude Code settings seeded into a new workspace's config directory. |
 
 ## Supported agents
@@ -52,15 +52,16 @@ cp scripts/.env.example scripts/.env
 - `LLAMA_SERVER` — absolute path to your llama-server binary
 - `PORT` — port for the llama.cpp server (default: `11434`)
 - `IMAGE_NAME` — base name for the Docker images (default: `agent-dev`; built as `<IMAGE_NAME>-base`, `<IMAGE_NAME>-claude`, and `<IMAGE_NAME>-opencode`)
+- `BUILD_AGENTS` — which agent images `build-image.sh` builds (space-separated; default: both, e.g. `BUILD_AGENTS="claude opencode"`). Set to a single agent to build only that image.
 - `MODEL_ALIAS` — model alias; selects LLM options in `start-llama.sh` and, for OpenCode, the model id
 
 ## Usage
 
 ```bash
-# Build the images (both agents by default)
+# Build the images (both agents by default, or the ones named in BUILD_AGENTS)
 ./scripts/build-image.sh
 
-# Build just one agent
+# Build just one agent (overrides BUILD_AGENTS from scripts/.env)
 ./scripts/build-image.sh --agent opencode
 
 # Run the selected agent in a container (mounts current dir as /workspace)

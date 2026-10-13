@@ -6,14 +6,14 @@ This repo is a set of bash scripts plus one Dockerfile that run a coding agent (
 
 - `./scripts/agent-workspace.sh` — main entrypoint. Starts colima and llama-server if needed, builds the image if missing, runs the agent in a container with the current directory mounted at `/workspace`.
 - `./scripts/localAgent.sh` — same, but runs the agent directly on the host (no Docker).
-- `./scripts/build-image.sh` — builds `<IMAGE_NAME>-base` (from `docker/base.Dockerfile`, a cached no-op unless that file changes), then `<IMAGE_NAME>-claude` and `<IMAGE_NAME>-opencode` on top of it (both by default; `--agent <name>` for one; `--no-cache` bypasses the cache for the agent image only, e.g. to pick up new agent versions — the base is never rebuilt by it).
+- `./scripts/build-image.sh` — builds `<IMAGE_NAME>-base` (from `docker/base.Dockerfile`, a cached no-op unless that file changes), then the agent images named in `BUILD_AGENTS` (`scripts/.env`; both by default) on top of it (`--agent <name>` overrides `BUILD_AGENTS` for one; `--no-cache` bypasses the cache for the agent image only, e.g. to pick up new agent versions — the base is never rebuilt by it).
 - `./scripts/start-llama.sh [MODEL_ALIAS]` — starts or reuses the llama server; kills and restarts it if a different model alias is serving on the port.
 
 Verify script changes with `bash -n <script>` (and shellcheck if available).
 
 ## Configuration
 
-- `scripts/.env` (gitignored, machine-specific) — copy from `scripts/.env.example`. `MODEL_DIR`, `LLAMA_SERVER`, and `MODEL_ALIAS` are required; scripts hard-fail (`:?`) without them. `AGENT` defaults to `claude`.
+- `scripts/.env` (gitignored, machine-specific) — copy from `scripts/.env.example`. `MODEL_DIR`, `LLAMA_SERVER`, and `MODEL_ALIAS` are required; scripts hard-fail (`:?`) without them. `AGENT` defaults to `claude`; `BUILD_AGENTS` (space-separated, used by `build-image.sh`) defaults to both agents.
 - `MODEL_ALIAS` is dual-purpose: it selects the model file + sampling options in the `case` block of `start-llama.sh`, and it becomes the llama-server `--alias` and the model id in the generated OpenCode config. Adding a new model means adding a case there.
 - The `qwen3.8-27B` alias additionally depends on `scripts/qwenChatTemplate.jinja` (`--chat-template-file` + `--jinja`).
 

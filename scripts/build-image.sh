@@ -9,8 +9,13 @@
 #   <IMAGE_NAME>-claude and <IMAGE_NAME>-opencode
 #
 # Usage:
-#   ./build-image.sh                 # build both agents
-#   ./build-image.sh --agent claude  # build only one agent
+#   ./build-image.sh                 # build the agents named in
+#                                    # BUILD_AGENTS (scripts/.env; default:
+#                                    # both, e.g. BUILD_AGENTS="claude
+#                                    # opencode"; set a single agent to
+#                                    # build only that)
+#   ./build-image.sh --agent claude  # build only one agent (overrides
+#                                    # BUILD_AGENTS from .env)
 #   ./build-image.sh --no-cache      # bypass the cache for the agent
 #                                    # image only (e.g. to pick up a new
 #                                    # agent version); the base always
@@ -35,7 +40,19 @@ DOCKER_DIR="$PROJECT_DIR/docker"
 
 # Parse flags
 BUILD_ARGS=()
-AGENTS=(claude opencode)
+# BUILD_AGENTS may be set in .env (space-separated, e.g. BUILD_AGENTS=opencode
+# to build only one agent image); defaults to both. --agent overrides it.
+if [ -n "${BUILD_AGENTS:-}" ]; then
+    read -r -a AGENTS <<< "$BUILD_AGENTS"
+    for AGENT in "${AGENTS[@]}"; do
+        case "$AGENT" in
+            claude|opencode) ;;
+            *) echo "Invalid BUILD_AGENTS: '${BUILD_AGENTS}' (expected 'claude' and/or 'opencode')" >&2; exit 1 ;;
+        esac
+    done
+else
+    AGENTS=(claude opencode)
+fi
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --no-cache) BUILD_ARGS+=(--no-cache); shift ;;
