@@ -35,6 +35,9 @@ case "${AGENT:-claude}" in
   "\$schema": "https://opencode.ai/config.json",
   "model": "llama.cpp/${MODEL_ALIAS}",
   "permission": "allow",
+  "tui": {
+     "tips":false
+  },
   "provider": {
     "llama.cpp": {
       "npm": "@ai-sdk/openai-compatible",
