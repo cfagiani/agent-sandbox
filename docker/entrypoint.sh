@@ -50,6 +50,11 @@ case "${AGENT:-claude}" in
   }
 }
 EOF
+        cat > "${CONFIG_DIR}/cli.json" <<EOF
+{
+  "highlights": false
+}
+EOF
         export OPENCODE_CONFIG="${CONFIG_DIR}/opencode.json"
         exec opencode --auto "$@"
         ;;
