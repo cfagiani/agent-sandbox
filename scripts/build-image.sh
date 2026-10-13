@@ -2,14 +2,19 @@
 # ────────────────────────────────────────────────────────────────
 # build-image.sh
 #
-# Builds the agent dev image(s) from the common base in docker/.
-# By default builds both agents:
+# Builds the agent dev image(s) on top of the common base in docker/.
+# Always builds the base first (<IMAGE_NAME>-base, from
+# docker/base.Dockerfile) — a cached no-op unless that file changes —
+# then the agent image(s):
 #   <IMAGE_NAME>-claude and <IMAGE_NAME>-opencode
 #
 # Usage:
 #   ./build-image.sh                 # build both agents
 #   ./build-image.sh --agent claude  # build only one agent
-#   ./build-image.sh --no-cache      # bypass the Docker build cache
+#   ./build-image.sh --no-cache      # bypass the cache for the agent
+#                                    # image only (e.g. to pick up a new
+#                                    # agent version); the base always
+#                                    # uses its cache
 # ────────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -25,6 +30,7 @@ if [ -f "$SCRIPT_DIR/.env" ]; then
 fi
 
 IMAGE_NAME="${IMAGE_NAME:-agent-dev}"
+BASE_IMAGE="${IMAGE_NAME}-base"
 DOCKER_DIR="$PROJECT_DIR/docker"
 
 # Parse flags
@@ -43,11 +49,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# ── base image (always cached; --no-cache intentionally not passed) ──
+echo "→ Building base ${BASE_IMAGE} (cached unless docker/base.Dockerfile changed)..."
+docker build -t "$BASE_IMAGE" -f "$DOCKER_DIR/base.Dockerfile" "$DOCKER_DIR"
+
 for AGENT in "${AGENTS[@]}"; do
     echo "→ Building ${IMAGE_NAME}-${AGENT}..."
     docker build \
         ${BUILD_ARGS[@]+"${BUILD_ARGS[@]}"} \
         --build-arg AGENT="$AGENT" \
+        --build-arg BASE_IMAGE="$BASE_IMAGE" \
         -t "${IMAGE_NAME}-${AGENT}" \
         "$DOCKER_DIR"
 done

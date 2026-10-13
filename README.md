@@ -2,17 +2,18 @@
 
 Run a coding agent — **[Claude Code](https://claude.ai/code)** or **[OpenCode](https://opencode.ai)** — in an isolated Docker container (or directly on the host) that talks to a local LLM instead of a cloud API.
 
-The agent is **pluggable**: a single common base image is built for each supported agent, and a `AGENT` setting in `scripts/.env` selects which one the runtime scripts launch.
+The agent is **pluggable**: a common base image is built once, then a thin agent image is built on top of it for each supported agent, and a `AGENT` setting in `scripts/.env` selects which one the runtime scripts launch.
 
 ## What's inside
 
 | Directory / File | Purpose |
 |---|---|
-| `docker/Dockerfile` | Common base image (Java 21, Maven, Python 3 + uv, Node.js LTS) plus the agent, selected at build time via `--build-arg AGENT=claude\|opencode`. |
+| `docker/base.Dockerfile` | Common base image (Java 21, Maven, Python 3 + uv, Node.js LTS). Built once as `<IMAGE_NAME>-base`; rebuilding it is a cached no-op unless this file changes. |
+| `docker/Dockerfile` | Thin agent image built on top of the base; the agent is selected at build time via `--build-arg AGENT=claude\|opencode`. Rebuilding only re-runs the agent install layers. |
 | `docker/entrypoint.sh` | Container entrypoint: resolves the host IP, then launches the selected agent (`claude` or `opencode`) pointed at the local LLM proxy. For OpenCode it generates `opencode.json` at runtime. |
 | `scripts/agent-workspace.sh` | Main entry point: reads `scripts/.env`, starts colima (if needed), starts llama-server (if needed), builds the Docker image (if missing), and runs the container with the current directory mounted as `/workspace` and a workspace-specific config directory mounted into the container. |
 | `scripts/localAgent.sh` | Lightweight alternative that skips Docker entirely — just starts llama-server and runs the selected agent directly on the host. |
-| `scripts/build-image.sh` | Builds the Docker image(s) from the common base. Builds **both** agents by default; use `--agent <name>` to build just one. |
+| `scripts/build-image.sh` | Builds the base image (cached), then the agent image(s) on top. Builds **both** agents by default; use `--agent <name>` to build just one. `--no-cache` bypasses the cache for the agent image only (e.g. to pick up a new agent version) — the base always uses its cache. |
 | `scripts/start-llama.sh` | Starts (or reuses) a local llama.cpp server with model-specific options. |
 | `scripts/.env.example` | Template for local configuration — copy to `.env` and set `AGENT`, `MODEL_DIR`, `LLAMA_SERVER`, `PORT`, `IMAGE_NAME`, and `MODEL_ALIAS`. |
 | `claude/initial_settings.json` | Default Claude Code settings seeded into a new workspace's config directory. |
@@ -50,7 +51,7 @@ cp scripts/.env.example scripts/.env
 - `MODEL_DIR` — directory containing your GGUF model files (filename is derived from `MODEL_ALIAS`)
 - `LLAMA_SERVER` — absolute path to your llama-server binary
 - `PORT` — port for the llama.cpp server (default: `11434`)
-- `IMAGE_NAME` — base name for the Docker images (default: `agent-dev`; built as `<IMAGE_NAME>-claude` and `<IMAGE_NAME>-opencode`)
+- `IMAGE_NAME` — base name for the Docker images (default: `agent-dev`; built as `<IMAGE_NAME>-base`, `<IMAGE_NAME>-claude`, and `<IMAGE_NAME>-opencode`)
 - `MODEL_ALIAS` — model alias; selects LLM options in `start-llama.sh` and, for OpenCode, the model id
 
 ## Usage

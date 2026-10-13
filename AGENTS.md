@@ -6,7 +6,7 @@ This repo is a set of bash scripts plus one Dockerfile that run a coding agent (
 
 - `./scripts/agent-workspace.sh` — main entrypoint. Starts colima and llama-server if needed, builds the image if missing, runs the agent in a container with the current directory mounted at `/workspace`.
 - `./scripts/localAgent.sh` — same, but runs the agent directly on the host (no Docker).
-- `./scripts/build-image.sh` — builds `<IMAGE_NAME>-claude` and `<IMAGE_NAME>-opencode` (both by default; `--agent <name>` for one; `--no-cache` to pick up new agent versions).
+- `./scripts/build-image.sh` — builds `<IMAGE_NAME>-base` (from `docker/base.Dockerfile`, a cached no-op unless that file changes), then `<IMAGE_NAME>-claude` and `<IMAGE_NAME>-opencode` on top of it (both by default; `--agent <name>` for one; `--no-cache` bypasses the cache for the agent image only, e.g. to pick up new agent versions — the base is never rebuilt by it).
 - `./scripts/start-llama.sh [MODEL_ALIAS]` — starts or reuses the llama server; kills and restarts it if a different model alias is serving on the port.
 
 Verify script changes with `bash -n <script>` (and shellcheck if available).
@@ -19,7 +19,7 @@ Verify script changes with `bash -n <script>` (and shellcheck if available).
 
 ## Gotchas
 
-- One common Dockerfile, two images: the agent is selected at build time via `--build-arg AGENT=claude|opencode`. `agent-workspace.sh` skips the build if the image already exists — `docker rmi <image>` or `build-image.sh --no-cache` to force a rebuild.
+- Two Dockerfiles, three images: `docker/base.Dockerfile` builds the common base (`<IMAGE_NAME>-base`); `docker/Dockerfile` adds the agent selected at build time via `--build-arg AGENT=claude|opencode` (base supplied via `--build-arg BASE_IMAGE`). Agent rebuilds never re-run the base layers; `--no-cache` only busts the agent layer. `agent-workspace.sh` skips the build if the image already exists — `docker rmi <image>` (add `<IMAGE_NAME>-base` to also drop the base) or `build-image.sh --no-cache` to force a rebuild.
 - OpenCode's `opencode.json` is generated at runtime by `docker/entrypoint.sh` (or `localAgent.sh`) because it depends on the resolved host IP and `MODEL_ALIAS`. Never check it in.
 - Per-workspace sandbox: `~/.agent-sandbox/workspaces/<sha256(pwd)[:16]>` is mounted as the agent's config dir. For claude, `settings.json` is seeded from `claude/initial_settings.json` on first run.
 - `agent-workspace.sh` assumes macOS colima (`colima start --memory 6`); on a Linux host without colima it will fail at that step.

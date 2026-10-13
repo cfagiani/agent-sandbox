@@ -50,9 +50,18 @@ MODEL_ALIAS="${MODEL_ALIAS:?MODEL_ALIAS is not set in .env}"
 source "$SCRIPT_DIR/start-llama.sh"
 
 # ── 4. build image if missing ────────────────────────────────────
+BASE_IMAGE="${IMAGE_NAME}-base"
+if ! docker image inspect "$BASE_IMAGE" &>/dev/null; then
+    echo "→ Building base image '${BASE_IMAGE}'..."
+    docker build -t "$BASE_IMAGE" -f "$PROJECT_DIR/docker/base.Dockerfile" "$PROJECT_DIR/docker"
+fi
 if ! docker image inspect "$IMAGE" &>/dev/null; then
     echo "→ Building Docker image '${IMAGE}'..."
-    docker build --build-arg AGENT="$AGENT" -t "$IMAGE" "$PROJECT_DIR/docker"
+    docker build \
+        --build-arg AGENT="$AGENT" \
+        --build-arg BASE_IMAGE="$BASE_IMAGE" \
+        -t "$IMAGE" \
+        "$PROJECT_DIR/docker"
 else
     echo "→ Image '${IMAGE}' already exists. Skipping build."
     echo "  (Run 'docker rmi ${IMAGE}' first to force a rebuild.)"
