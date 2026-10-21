@@ -100,6 +100,11 @@ esac
 
 PATH_TO_MODEL="${MODEL_DIR}/${MODEL_FILE}"
 
+# Optional multimodal projector — only passed when MPROJ_FILE is set and non-empty.
+if [[ -n "${MMPROJ_FILE:-}" ]]; then
+    LLM_OPTIONS+=(--mmproj "$MMPROJ_FILE")
+fi
+
 start_server() {
     echo "→ Starting llama-server on port $PORT with $MODEL_FILE..."
     nohup "$LLAMA_SERVER" \
