@@ -105,6 +105,11 @@ if [[ -n "${MMPROJ_FILE:-}" ]]; then
     LLM_OPTIONS+=(--mmproj "$MMPROJ_FILE")
 fi
 
+# Optional reasoning effort - only passed when REASONING_EFFORT is set and non-empty
+if [[ -n "${REASONING_EFFORT:-}" ]]; then
+  LLM_OPTIONS+=(--reasoning-effort "$REASONING_EFFORT")
+fi
+
 start_server() {
     echo "→ Starting llama-server on port $PORT with $MODEL_FILE..."
     nohup "$LLAMA_SERVER" \
